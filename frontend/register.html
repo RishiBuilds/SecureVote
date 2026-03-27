@@ -3,18 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - SecureVote</title>
+    <title>Register — SecureVote</title>
+    <meta name="description" content="Create your SecureVote account and participate in secure elections.">
     <link rel="stylesheet" href="styles.css">
+    <style>
+        .password-strength {
+            height: 4px;
+            border-radius: 2px;
+            background: var(--color-border);
+            margin-top: 6px;
+            overflow: hidden;
+        }
+        .password-strength .bar {
+            height: 100%;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+            width: 0%;
+        }
+        .strength-text {
+            font-size: 0.75rem;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+    </style>
 </head>
 <body class="fade-in">
     <nav class="navbar">
         <div class="container">
             <a href="index.html" class="navbar-brand">
-                <svg viewBox="0 0 24 24"><path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5zm0 2.18l7 3.89v4.93c0 4.54-2.77 8.79-7 10.05-4.23-1.26-7-5.51-7-10.05V8.07l7-3.89zM11 14H9v-2h2v2zm0-4H9V6h2v4z" fill="currentColor"/></svg>
+                <div class="brand-icon">
+                    <svg viewBox="0 0 24 24"><path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/></svg>
+                </div>
                 SecureVote
             </a>
             <div class="navbar-nav">
-                <a href="login.html" class="nav-link">Login</a>
+                <a href="login.html" class="nav-link">Sign In</a>
             </div>
         </div>
     </nav>
@@ -23,50 +46,47 @@
         <div class="card auth-card">
             <div class="auth-header">
                 <h1>Create Account</h1>
-                <p class="subtitle">Register to cast your secure vote</p>
+                <p class="subtitle">Register to participate in secure elections</p>
                 <div class="trust-badge">
-                    <svg style="width: 14px; height: 14px;" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
-                    Identity Verification Secure
+                    <svg style="width:14px;height:14px;" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+                    Your data is encrypted and secure
                 </div>
             </div>
-
-            <div id="error-message" class="alert alert-error" style="display: none;"></div>
-            <div id="success-message" class="alert alert-success" style="display: none;"></div>
 
             <form id="register-form">
                 <div class="form-group">
                     <label for="full_name">Full Name</label>
-                    <input type="text" id="full_name" name="full_name" class="form-control" required placeholder="John Doe">
+                    <input type="text" id="full_name" class="form-control" required placeholder="John Doe" autocomplete="name">
                 </div>
-
                 <div class="form-group">
                     <label for="email">Email Address</label>
-                    <input type="email" id="email" name="email" class="form-control" required placeholder="name@example.com">
+                    <input type="email" id="email" class="form-control" required placeholder="name@example.com" autocomplete="email">
                 </div>
-
                 <div class="form-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password" class="form-control" required minlength="6" placeholder="Min. 6 characters">
+                    <input type="password" id="password" class="form-control" required placeholder="Min. 6 characters" autocomplete="new-password">
+                    <div class="password-strength"><div class="bar" id="strength-bar"></div></div>
+                    <div class="strength-text" id="strength-text"></div>
                 </div>
 
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-primary btn-block">Register Identity</button>
+                    <button type="submit" id="register-btn" class="btn btn-primary btn-block">Create Account</button>
                     <a href="login.html" class="btn btn-secondary btn-block">Already have an account?</a>
                 </div>
             </form>
 
-            <div id="loading" class="loading" style="display: none;">
-                <div class="spinner"></div> Verifying Registration...
+            <div id="loading" class="loading" style="display:none;">
+                <div class="spinner"></div> Creating your account...
             </div>
         </div>
     </main>
 
     <footer>
-        <div class="container" style="justify-content: center;">
-            <span>&copy; 2026 SecureVote</span>
-        </div>
+        <div class="container"><span>&copy; 2026 SecureVote</span></div>
     </footer>
 
+    <script src="components/auth.js"></script>
+    <script src="components/toast.js"></script>
     <script src="register.js"></script>
 </body>
 </html>
