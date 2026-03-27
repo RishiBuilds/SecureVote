@@ -1,56 +1,56 @@
-const API_URL = 'http://127.0.0.1:5000';
 
-function showError(message) {
-    const errorDiv = document.getElementById('error-message');
-    errorDiv.textContent = message;
-    errorDiv.style.display = 'block';
-}
-
-function hideMessages() {
-    document.getElementById('error-message').style.display = 'none';
-}
-
-function setLoading(isLoading) {
-    document.getElementById('loading').style.display = isLoading ? 'block' : 'none';
-    document.getElementById('login-form').style.display = isLoading ? 'none' : 'block';
-}
 
 document.getElementById('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    hideMessages();
-    
+    const btn = document.getElementById('login-btn');
+    const loading = document.getElementById('loading');
+
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
 
     if (!email || !password) {
-        showError('All fields are required');
+        Toast.error('Please fill in all fields.');
         return;
     }
-    
-    setLoading(true);
-    
+
+    btn.disabled = true;
+    loading.style.display = 'flex';
+
     try {
-        const response = await fetch(`${API_URL}/login`, {
+        const response = await fetch(`${API_URL}/api/login`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include', 
-            body: JSON.stringify({ email, password })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
         });
-        
+
         const data = await response.json();
-        
+
         if (response.ok) {
-            localStorage.setItem('voter_authenticated', 'true');
-            localStorage.setItem('voter_name', data.voter.full_name);
-            window.location.href = 'dashboard.html';
+            Auth.setToken(data.token);
+            Auth.setUser(data.user);
+            Toast.success('Login successful! Redirecting...');
+
+            setTimeout(() => {
+                if (data.user.role === 'admin') {
+                    window.location.href = '/admin-dashboard.html';
+                } else {
+                    window.location.href = '/dashboard.html';
+                }
+            }, 800);
         } else {
-            showError(data.error || 'Login failed');
-            setLoading(false);
+            Toast.error(data.error || 'Login failed');
+            btn.disabled = false;
+            loading.style.display = 'none';
         }
-    } catch (error) {
-        showError('Network error. Please check your connection and try again.');
-        setLoading(false);
+    } catch (err) {
+        Toast.error('Network error. Please check your connection.');
+        btn.disabled = false;
+        loading.style.display = 'none';
     }
 });
+
+
+if (Auth.isAuthenticated()) {
+    const user = Auth.getUser();
+    window.location.href = user?.role === 'admin' ? '/admin-dashboard.html' : '/dashboard.html';
+}

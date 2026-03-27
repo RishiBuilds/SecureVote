@@ -1,56 +1,58 @@
-const API_URL = 'http://127.0.0.1:5000';
 
-function showError(message) {
-    const errorDiv = document.getElementById('error-message');
-    errorDiv.textContent = message;
-    errorDiv.style.display = 'block';
-}
-
-function hideMessages() {
-    document.getElementById('error-message').style.display = 'none';
-}
-
-function setLoading(isLoading) {
-    document.getElementById('loading').style.display = isLoading ? 'block' : 'none';
-    document.getElementById('admin-login-form').style.display = isLoading ? 'none' : 'block';
-}
 
 document.getElementById('admin-login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    hideMessages();
-    
-    const username = document.getElementById('username').value.trim();
+    const btn = document.getElementById('login-btn');
+    const loading = document.getElementById('loading');
+
+    const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
-    
-    if (!username || !password) {
-        showError('All fields are required');
+
+    if (!email || !password) {
+        Toast.error('Please fill in all fields.');
         return;
     }
-    
-    setLoading(true);
-    
+
+    btn.disabled = true;
+    loading.style.display = 'flex';
+
     try {
-        const response = await fetch(`${API_URL}/admin/login`, {
+        const response = await fetch(`${API_URL}/api/login`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include',
-            body: JSON.stringify({ username, password })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
         });
-        
+
         const data = await response.json();
-        
+
         if (response.ok) {
-            localStorage.setItem('admin_authenticated', 'true');
-            localStorage.setItem('admin_username', data.admin.username);
-            window.location.href = 'admin-dashboard.html';
+            if (data.user.role !== 'admin') {
+                Toast.error('This account does not have admin privileges.');
+                btn.disabled = false;
+                loading.style.display = 'none';
+                return;
+            }
+
+            Auth.setToken(data.token);
+            Auth.setUser(data.user);
+            Toast.success('Admin access granted. Redirecting...');
+
+            setTimeout(() => {
+                window.location.href = '/admin-dashboard.html';
+            }, 800);
         } else {
-            showError(data.error || 'Login failed');
-            setLoading(false);
+            Toast.error(data.error || 'Login failed');
+            btn.disabled = false;
+            loading.style.display = 'none';
         }
-    } catch (error) {
-        showError('Network error. Please check your connection and try again.');
-        setLoading(false);
+    } catch (err) {
+        Toast.error('Network error. Please check your connection.');
+        btn.disabled = false;
+        loading.style.display = 'none';
     }
 });
+
+
+if (Auth.isAuthenticated() && Auth.isAdmin()) {
+    window.location.href = '/admin-dashboard.html';
+}
