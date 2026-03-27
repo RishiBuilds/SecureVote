@@ -1,48 +1,22 @@
 from functools import wraps
-from flask import session, jsonify
+from flask import request, jsonify, g
+from auth_utils import decode_token
 from database import get_db_connection
 
-def login_required(f):
+
+def token_required(f):
+    """Decorator that validates JWT token from Authorization header."""
     @wraps(f)
-    def decorated_function(*args, **kwargs):
-        voter_id = session.get('voter_id')
-        
-        if not voter_id:
-            return jsonify({'error': 'Unauthorized: Please log in'}), 401
+    def decorated(*args, **kwargs):
+        auth_header = request.headers.get('Authorization', '')
 
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('SELECT id FROM voters WHERE id = ?', (voter_id,))
-        voter = cursor.fetchone()
-        conn.close()
-        
-        if not voter:
-            session.clear()
-            return jsonify({'error': 'Unauthorized: Invalid session'}), 401
-        
-        return f(*args, **kwargs)
-    
-    return decorated_function
+        if not auth_header.startswith('Bearer '):
+            return jsonify({'error': 'Missing or invalid authorization header'}), 401
 
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        admin_id = session.get('admin_id')
-        is_admin = session.get('is_admin')
-        
-        if not admin_id or not is_admin:
-            return jsonify({'error': 'Unauthorized: Admin access required'}), 401
+        token = auth_header.split(' ', 1)[1]
+        payload = decode_token(token)
 
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('SELECT id FROM admins WHERE id = ?', (admin_id,))
-        admin = cursor.fetchone()
-        conn.close()
+        if not payload:
+            return jsonify({'error': 'Invalid or expired token'}), 401
+
         
-        if not admin:
-            session.clear()
-            return jsonify({'error': 'Unauthorized: Invalid admin session'}), 401
-        
-        return f(*args, **kwargs)
-    
-    return decorated_function
