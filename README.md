@@ -1,266 +1,315 @@
-# SecureVote
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.8+-3776AB?style=flat-square&logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/Flask-3.x-000000?style=flat-square&logo=flask&logoColor=white" />
+  <img src="https://img.shields.io/badge/SQLite-003B57?style=flat-square&logo=sqlite&logoColor=white" />
+  <img src="https://img.shields.io/badge/JWT-Auth-000000?style=flat-square&logo=jsonwebtokens&logoColor=white" />
+  <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" />
+</p>
 
-A full-stack web application demonstrating fundamental concepts in REST API design, database management, authentication, and security basics.
+# 🔐 SecureVote
 
-## Security Limitations
+**A tamper-resistant, blockchain-secured online voting platform.**
 
-This educational project uses simplified security measures that do not meet production standards:
+SecureVote is a production-grade web application that demonstrates real-world security engineering — bcrypt password hashing, JWT authentication, blockchain-style vote chaining with HMAC-SHA256, fraud detection, and a complete audit trail. It's designed to feel like a modern SaaS product, not a toy demo.
 
-- Basic SHA-256 password hashing
-- Simple session management
-- No multi-factor authentication
-- No professional security audit
-- No compliance with electoral regulations
+---
 
-Real voting systems require advanced cryptographic protocols, verifiable audit trails, multi-factor authentication, legal compliance, professional security audits, and end-to-end encryption.
+## Key Features
+
+| Feature                          | Description                                                                                                               |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| 🔗 **Blockchain Vote Integrity** | Every vote is hash-chained to the previous one using HMAC-SHA256. Tampering breaks the chain and is immediately detected. |
+| 🛡️ **One-Vote Guarantee**        | Enforced at the database level with unique constraints — no double voting, no exceptions.                                 |
+| 🔑 **JWT Authentication**        | Stateless token-based auth with bcrypt password hashing and role-based access control (voter/admin).                      |
+| 🚨 **Fraud Detection**           | Automated alerts for IP anomalies (multiple users from same IP) and rapid submission patterns.                            |
+| 📋 **Full Audit Trail**          | Every action (login, vote, election change) is logged with timestamps, user IDs, IP addresses, and metadata.              |
+| 🏛️ **Multi-Election Support**    | Run multiple elections simultaneously, each with their own candidates, voters, and independent vote chains.               |
+| 📊 **Live Results**              | Real-time results visualization with Chart.js doughnut charts and percentage bars.                                        |
+| ✅ **Chain Verification**        | Admin endpoint to verify the entire vote chain integrity at any time.                                                     |
+
+---
 
 ## Technology Stack
 
-- **Backend**: Python Flask (REST API)
-- **Database**: SQLite (embedded database)
-- **Frontend**: Vanilla HTML, CSS, JavaScript (Modern SaaS layout, Custom Design System using CSS Variables)
-- **Authentication**: Flask server-side sessions
-- **Password Security**: SHA-256 hashing
+| Layer        | Technology                               |
+| ------------ | ---------------------------------------- |
+| **Backend**  | Python Flask (REST API with Blueprints)  |
+| **Database** | SQLite (6-table production schema)       |
+| **Auth**     | bcrypt + PyJWT (stateless JWT tokens)    |
+| **Frontend** | Vanilla HTML, CSS, JavaScript            |
+| **Charts**   | Chart.js 4.x                             |
+| **Design**   | Custom CSS design system with Inter font |
 
-## Features
-
-### Voter Module
-
-- User registration with email and password
-- Secure login with session management, featuring elegant centered auth cards and responsive inputs
-- View all candidates with party information represented in modern CSS grid cards
-- Cast vote with a specialized custom HTML/CSS confirmation modal (replaces native browser prompts)
-- One person, one vote enforcement (DB + API level)
-- "Already Voted" indicator with UI lockdown (disabling interactions)
-- Logout functionality
-
-### Admin Module
-
-- Separate admin login portal with distinct "Restricted Access" styling
-- Modern left-sidebar layout for dashboard multi-tab navigation
-- Real-time statistics displayed via gradient-accented stat cards
-- Add/delete candidates with modern form structures
-- View all registered voters with voting status in styled data tables
-- Full votes log with timestamps
-- Election results with rankings, percentage gradient bars, and visual badges
-
-### UI/UX Design
-
-- Modern SaaS aesthetic inspired by platforms like Stripe and Clerk
-- Deep Blue / Indigo color palette with Google Fonts 'Inter' typography
-- Custom CSS variable ecosystem for global theme consistency
-- Smooth 200-300ms transitions and micro-animations for interactive hover states
-- "Trust signals" including lock icons and encryption reassurance badges
-- Fully responsive layout matching desktop and mobile parameters
+---
 
 ## Project Structure
 
 ```text
+SecureVote/
 ├── backend/
-│   ├── app.py                  # Main Flask application
-│   ├── database.py             # Database initialization and utilities
-│   ├── auth_utils.py           # Password hashing utilities
-│   ├── decorators.py           # Authentication decorators
-│   ├── requirements.txt        # Python dependencies
-│   └── voting.db               # SQLite database (auto-created)
+│   ├── app.py                     # Application factory with Blueprint registration
+│   ├── database.py                # Schema (6 tables) + seed data
+│   ├── auth_utils.py              # bcrypt hashing + JWT token generation/verification
+│   ├── decorators.py              # @token_required and @admin_required middleware
+│   ├── requirements.txt           # Python dependencies
+│   ├── routes/
+│   │   ├── auth.py                # /api/register, /api/login, /api/me
+│   │   ├── voting.py              # /api/elections, /api/vote, /api/results
+│   │   └── admin.py               # /api/admin/* (elections, candidates, stats, fraud...)
+│   └── services/
+│       ├── vote_security.py       # HMAC-SHA256 vote hashing + chain verification
+│       ├── fraud_detection.py     # IP anomaly + rapid submission detection
+│       └── audit.py               # Centralized audit logging service
 │
 ├── frontend/
-│   ├── index.html              # Landing page
-│   ├── register.html           # Voter registration
-│   ├── login.html              # Voter login
-│   ├── dashboard.html          # Voter dashboard
-│   ├── admin-login.html        # Admin login
-│   ├── admin-dashboard.html    # Admin dashboard
-│   ├── styles.css              # Main stylesheet
-│   ├── admin-styles.css        # Admin-specific styles
-│   ├── register.js             # Registration logic
-│   ├── login.js                # Login logic
-│   ├── dashboard.js            # Voter dashboard logic
-│   ├── admin-login.js          # Admin login logic
-│   └── admin-dashboard.js      # Admin dashboard logic
+│   ├── index.html                 # landing page
+│   ├── login.html / login.js      # Voter login (JWT)
+│   ├── register.html / register.js # Registration with password strength indicator
+│   ├── dashboard.html / dashboard.js # Voter dashboard (election selector, vote, results)
+│   ├── admin-login.html / admin-login.js # Admin login (dark theme)
+│   ├── admin-dashboard.html / admin-dashboard.js # Admin panel (8-tab sidebar)
+│   ├── styles.css                 # Design system (tokens, components, responsive)
+│   ├── admin-styles.css           # Admin-specific styles (sidebar, stat cards)
+│   └── components/
+│       ├── auth.js                # JWT token management + authenticated fetch wrapper
+│       └── toast.js               # Toast notification system (4 types, slide animations)
 │
-└── README.md                   # This file
+└── README.md
 ```
 
-## Installation and Setup
+---
+
+## Quick Start
 
 ### Prerequisites
 
-- Python 3.8 or higher
-- pip (Python package manager)
-- Modern web browser (Chrome, Firefox, Edge, Safari)
+- Python 3.8+
+- pip
 
-### Step 1: Install Python Dependencies
+### Installation
 
 ```bash
+# 1. Install dependencies
 cd backend
 pip install -r requirements.txt
-```
 
-This installs Flask (web framework) and Flask-CORS (cross-origin resource sharing).
-
-### Step 2: Initialize Database
-
-The database will be automatically initialized when you first run the application.
-
-## How to Run
-
-### Start the Backend Server
-
-```bash
-cd backend
+# 2. Start the server
 python app.py
 ```
 
-You should see output indicating the server is starting at `http://127.0.0.1:5000`, the default admin is created (`admin` / `admin123`), and the database is initialized successfully.
+The server starts at **http://127.0.0.1:5000** — the database and default admin account are created automatically.
 
-### Open the Frontend
+### Default Credentials
 
-Simply open `frontend/index.html` in your web browser.
-Note: Keep the backend server running while using the application.
+| Role      | Email                         | Password             |
+| --------- | ----------------------------- | -------------------- |
+| **Admin** | `admin@securevote.io`         | `admin123`           |
+| **Voter** | Register via `/register.html` | Your chosen password |
 
-## Default Login Credentials
-
-### Admin Account
-
-- **Username**: `admin`
-- **Password**: `admin123`
-
-### Voter Accounts
-
-You need to register new voter accounts through the registration page.
+---
 
 ## Usage Guide
 
 ### As a Voter
 
-1. Open `frontend/index.html` in your browser.
-2. Click "Register to Vote".
-3. Fill in your details (name, email, password).
-4. Login with your credentials.
-5. View available candidates.
-6. Select a candidate and click "Review & Cast Vote".
-7. Confirm your vote in the modal.
-8. You will see an "Already Voted" status locking further interaction.
+1. Navigate to `http://127.0.0.1:5000`
+2. Click **"Register to Vote"** and create your account
+3. You'll be redirected to the **Voter Dashboard**
+4. Select an active election from the dropdown
+5. Click on your preferred candidate card
+6. Click **"Review & Cast Vote"** → confirm in the modal
+7. Your **Vote Receipt** appears with a cryptographic hash — proof your vote is sealed in the chain
+8. Live results update immediately with a Chart.js doughnut chart
 
 ### As an Administrator
 
-1. Open `frontend/index.html` in your browser.
-2. Click "Admin Portal" from the footer.
-3. Login with admin credentials (`admin` / `admin123`).
-4. Access the admin control panel with 5 sections:
-   - **Statistics**: View total voters, votes cast, turnout percentage.
-   - **Candidates**: Add or delete candidates.
-   - **Voters**: View all registered voters and their voting status.
-   - **Votes Cast**: View all cast votes with timestamps.
-   - **Results**: View election results with rankings and percentages.
+1. Navigate to `http://127.0.0.1:5000/admin-login.html`
+2. Login with admin credentials
+3. The admin dashboard has **8 sections** via the sidebar:
 
-## API Endpoints
-
-### Public Endpoints
-
-- `POST /register` - Register new voter
-- `POST /login` - Voter login
-- `POST /admin/login` - Admin login
-
-### Voter Protected Endpoints
-
-- `GET /me` - Get current voter info
-- `POST /logout` - Logout voter
-- `GET /candidates` - Get all candidates
-- `POST /vote` - Cast a vote
-
-### Admin Protected Endpoints
-
-- `GET /admin/me` - Get current admin info
-- `POST /admin/logout` - Logout admin
-- `POST /admin/add-candidate` - Add new candidate
-- `DELETE /admin/delete-candidate/<id>` - Delete candidate
-- `GET /admin/voters` - Get all voters
-- `GET /admin/votes` - Get all votes
-- `GET /admin/results` - Get election results
-- `GET /admin/stats` - Get election statistics
-
-## Database Schema
-
-### voters
-
-- `id` (PRIMARY KEY)
-- `full_name` (TEXT)
-- `email` (UNIQUE)
-- `password` (SHA-256 hash)
-- `has_voted` (BOOLEAN)
-- `created_at` (TIMESTAMP)
-
-### admins
-
-- `id` (PRIMARY KEY)
-- `username` (UNIQUE)
-- `password` (SHA-256 hash)
-
-### candidates
-
-- `id` (PRIMARY KEY)
-- `candidate_name` (TEXT)
-- `party_name` (TEXT)
-- `symbol` (TEXT)
-- `created_at` (TIMESTAMP)
-
-### votes
-
-- `id` (PRIMARY KEY)
-- `voter_id` (UNIQUE FOREIGN KEY)
-- `candidate_id` (FOREIGN KEY)
-- `timestamp` (TIMESTAMP)
-
-## Security Features
-
-- Password hashing using SHA-256
-- Server-side session management
-- One vote per voter (database UNIQUE constraint)
-- Route protection with authentication decorators
-- Input validation on all endpoints
-- XSS prevention with HTML escaping
-- CORS configuration
-
-## Troubleshooting
-
-### Backend server won't start
-
-- Make sure Python 3.8+ is installed.
-- Install dependencies: `pip install -r requirements.txt`.
-- Check if port 5000 is available.
-
-### Frontend can't connect to backend
-
-- Ensure backend server is running at http://127.0.0.1:5000.
-- Check browser console for CORS errors.
-- Try opening frontend in a different browser.
-
-### Database errors
-
-- Delete `backend/voting.db` and restart the server to reset the database.
-
-## Learning Objectives
-
-This project demonstrates:
-
-1. **REST API Design**: Creating a RESTful API with Flask.
-2. **Database Management**: Using SQLite with proper schema design.
-3. **Authentication**: Implementing session-based authentication.
-4. **Security Basics**: Password hashing, input validation, XSS prevention.
-5. **Frontend-Backend Communication**: Using fetch API with credentials.
-6. **State Management**: Managing authentication state in the browser.
-7. **Error Handling**: Proper error responses and user feedback.
-
-## License
-
-This is an educational project. Feel free to use it for learning purposes.
-
-## Final Reminder
-
-This system is for educational purposes only. For production voting systems, consult with security experts and follow industry standards and legal requirements.
+| Section          | Functionality                                                           |
+| ---------------- | ----------------------------------------------------------------------- |
+| **Overview**     | Platform stats (voters, votes, turnout, active elections, fraud alerts) |
+| **Elections**    | Create new elections, start/stop existing ones                          |
+| **Candidates**   | Add candidates to elections, delete candidates without votes            |
+| **Results**      | View results with charts + verify vote chain integrity                  |
+| **Voters**       | View all registered voters and their participation                      |
+| **Vote Ledger**  | Full vote log with hashes, IPs, timestamps                              |
+| **Fraud Alerts** | Review and resolve flagged anomalies                                    |
+| **Audit Logs**   | Complete action trail with metadata                                     |
 
 ---
 
-Built for educational purposes only | 2026
+## API Reference
+
+All protected endpoints require `Authorization: Bearer <token>` header.
+
+### Authentication
+
+| Method | Endpoint        | Description               |
+| ------ | --------------- | ------------------------- |
+| `POST` | `/api/register` | Register a new voter      |
+| `POST` | `/api/login`    | Login (returns JWT token) |
+| `GET`  | `/api/me`       | Get current user profile  |
+
+### Voting (Voter)
+
+| Method | Endpoint                        | Description                      |
+| ------ | ------------------------------- | -------------------------------- |
+| `GET`  | `/api/elections`                | List all elections               |
+| `GET`  | `/api/elections/:id/candidates` | Get candidates + voting status   |
+| `POST` | `/api/vote`                     | Cast a vote (blockchain-chained) |
+| `GET`  | `/api/results/:id`              | Get election results             |
+| `GET`  | `/api/verify-chain/:id`         | Verify vote chain integrity      |
+
+### Admin
+
+| Method   | Endpoint                              | Description                |
+| -------- | ------------------------------------- | -------------------------- |
+| `GET`    | `/api/admin/elections`                | List elections with stats  |
+| `POST`   | `/api/admin/election`                 | Create a new election      |
+| `PUT`    | `/api/admin/election/:id`             | Update/start/stop election |
+| `POST`   | `/api/admin/candidate`                | Add a candidate            |
+| `PUT`    | `/api/admin/candidate/:id`            | Edit a candidate           |
+| `DELETE` | `/api/admin/candidate/:id`            | Delete a candidate         |
+| `GET`    | `/api/admin/stats`                    | Platform-wide statistics   |
+| `GET`    | `/api/admin/voters`                   | All registered voters      |
+| `GET`    | `/api/admin/votes`                    | Full vote ledger           |
+| `GET`    | `/api/admin/audit-logs`               | Audit trail                |
+| `GET`    | `/api/admin/fraud-alerts`             | Fraud alerts               |
+| `PUT`    | `/api/admin/fraud-alerts/:id/resolve` | Resolve a fraud alert      |
+| `GET`    | `/api/admin/verify-chain/:id`         | Verify vote chain (admin)  |
+
+---
+
+## Database Schema
+
+### `users`
+
+Unified table for voters and admins with role-based access.
+
+| Column       | Type       | Notes              |
+| ------------ | ---------- | ------------------ |
+| `id`         | INTEGER PK | Auto-increment     |
+| `full_name`  | TEXT       | Required           |
+| `email`      | TEXT       | Unique             |
+| `password`   | TEXT       | bcrypt hash        |
+| `role`       | TEXT       | `voter` or `admin` |
+| `created_at` | TIMESTAMP  | Auto-set           |
+
+### `elections`
+
+Multi-election support with lifecycle management.
+
+| Column                    | Type       | Notes                        |
+| ------------------------- | ---------- | ---------------------------- |
+| `id`                      | INTEGER PK | Auto-increment               |
+| `title`                   | TEXT       | Required                     |
+| `description`             | TEXT       | Optional                     |
+| `status`                  | TEXT       | `pending`, `active`, `ended` |
+| `start_time` / `end_time` | TIMESTAMP  | Set on status change         |
+
+### `candidates`
+
+Linked to elections with emoji symbols.
+
+| Column        | Type           | Notes               |
+| ------------- | -------------- | ------------------- |
+| `id`          | INTEGER PK     | Auto-increment      |
+| `election_id` | FK → elections | Required            |
+| `name`        | TEXT           | Required            |
+| `party`       | TEXT           | Required            |
+| `symbol`      | TEXT           | Emoji, default `👤` |
+| `description` | TEXT           | Optional bio        |
+
+### `votes`
+
+Blockchain-style chaining with HMAC-SHA256 hashes.
+
+| Column          | Type            | Notes                                      |
+| --------------- | --------------- | ------------------------------------------ |
+| `id`            | INTEGER PK      | Auto-increment                             |
+| `user_id`       | FK → users      | Unique per election                        |
+| `candidate_id`  | FK → candidates | Required                                   |
+| `election_id`   | FK → elections  | Required                                   |
+| `vote_hash`     | TEXT            | HMAC-SHA256 hash                           |
+| `previous_hash` | TEXT            | Previous vote's hash (`GENESIS` for first) |
+| `ip_address`    | TEXT            | Voter's IP                                 |
+| `timestamp`     | TIMESTAMP       | Auto-set                                   |
+
+### `audit_logs`
+
+Complete action trail for accountability.
+
+| Column       | Type       | Notes                             |
+| ------------ | ---------- | --------------------------------- |
+| `id`         | INTEGER PK | Auto-increment                    |
+| `action`     | TEXT       | e.g. `vote_cast`, `login_success` |
+| `user_id`    | INTEGER    | Actor (nullable)                  |
+| `ip_address` | TEXT       | Origin IP                         |
+| `metadata`   | TEXT       | JSON details                      |
+| `timestamp`  | TIMESTAMP  | Auto-set                          |
+
+### `fraud_alerts`
+
+Automated anomaly detection results.
+
+| Column                    | Type       | Notes                                 |
+| ------------------------- | ---------- | ------------------------------------- |
+| `id`                      | INTEGER PK | Auto-increment                        |
+| `alert_type`              | TEXT       | e.g. `ip_anomaly`, `rapid_submission` |
+| `severity`                | TEXT       | `low`, `medium`, `high`, `critical`   |
+| `user_id` / `election_id` | INTEGER    | Context                               |
+| `details`                 | TEXT       | Description                           |
+| `resolved`                | BOOLEAN    | Default `false`                       |
+
+---
+
+## Security Architecture
+
+| Layer                  | Implementation                                                     |
+| ---------------------- | ------------------------------------------------------------------ |
+| **Password Hashing**   | bcrypt with automatic salting                                      |
+| **Authentication**     | Stateless JWT tokens (PyJWT) with configurable expiry              |
+| **Authorization**      | Role-based decorators (`@token_required`, `@admin_required`)       |
+| **Vote Integrity**     | HMAC-SHA256 hash chaining — each vote references the previous hash |
+| **Chain Verification** | Full chain walk with hash recomputation to detect tampering        |
+| **Fraud Detection**    | IP anomaly detection + rapid submission pattern flagging           |
+| **Audit Trail**        | Every action logged with user, IP, timestamp, and metadata         |
+| **Input Validation**   | Server-side validation on all endpoints                            |
+| **XSS Prevention**     | HTML escaping in all frontend rendering                            |
+| **CORS**               | Configured via Flask-CORS                                          |
+
+### Environment Variables
+
+| Variable            | Purpose                         | Default                         |
+| ------------------- | ------------------------------- | ------------------------------- |
+| `SECUREVOTE_SECRET` | JWT signing key                 | Dev key (change in production!) |
+| `VOTE_SECRET_KEY`   | HMAC key for vote hash chaining | Dev key (change in production!) |
+
+---
+
+## Troubleshooting
+
+| Issue                  | Solution                                                     |
+| ---------------------- | ------------------------------------------------------------ |
+| Server won't start     | Ensure Python 3.8+ and run `pip install -r requirements.txt` |
+| Port 5000 in use       | Kill the existing process or change the port in `app.py`     |
+| Database errors        | Delete `backend/voting.db` and restart — it auto-recreates   |
+| "Token expired" errors | Re-login to get a fresh JWT token                            |
+| CORS errors            | Ensure you're accessing via `http://127.0.0.1:5000`          |
+
+---
+
+## License
+
+MIT — free to use for learning, demos, and portfolio projects.
+
+> **Disclaimer**: This is an educational project demonstrating security engineering concepts. For production voting systems, consult with security experts and follow electoral regulations.
+
+---
+
+<p align="center">
+  <strong>Built with 🔒 by SecureVote</strong><br>
+  <sub>Tamper-proof voting for everyone · 2026</sub>
+</p>
