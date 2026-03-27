@@ -1,0 +1,103 @@
+# Byte-compiled / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Environment Variables
+.env
+.env.*
+!.env.example
+
+# Flask Specific
+instance/
+.webassets-cache
+.flaskenv
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+backend/voting.db
+instance/*.db
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache/
+*.cache
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Frontend / Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+pnpm-lock.yaml
+.next/
+out/
+
+# IDE / Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs & Temp Files
+*.log
+*.out
+*.err
+*.tmp
+*.bak
+*.zip
+*.tar.gz
+*.rar
+pip-log.txt
+pip-delete-this-directory.txt
