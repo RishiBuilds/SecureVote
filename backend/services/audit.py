@@ -5,6 +5,9 @@ from database import get_db_connection
 def log_action(action, user_id=None, ip_address=None, metadata=None):
     """Write an entry to the audit log."""
     meta_json = json.dumps(metadata) if metadata else '{}'
+    
+    # Simple rate limiting per action (skip logging identical action within 1 min if needed)
+    
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute(
