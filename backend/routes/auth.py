@@ -1,5 +1,5 @@
 import re
-from flask import Blueprint, request, jsonify, g
+from flask import Blueprint, request, jsonify
 from database import get_db_connection
 from auth_utils import hash_password, verify_password, generate_token
 from decorators import token_required
@@ -7,11 +7,9 @@ from services.audit import log_action
 
 auth_bp = Blueprint('auth', __name__)
 
-
 def _is_valid_email(email):
-    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    pattern = r'^[^@]+@[^@]+\.[^@]+$'
     return re.match(pattern, email) is not None
-
 
 @auth_bp.route('/api/register', methods=['POST'])
 def register():
@@ -54,4 +52,84 @@ def register():
         user_id = cursor.lastrowid
         conn.close()
 
+        # Generate a token immediately upon registration
+        token = generate_token(user_id, 'voter', full_name)
         
+        # Log this registration action securely
+        log_action(action='USER_REGISTER', user_id=user_id, ip_address=request.remote_addr)
+
+        return jsonify({
+            'message': 'Registration successful',
+            'token': token,
+            'user': {
+                'id': user_id,
+                'full_name': full_name,
+                'email': email,
+                'role': 'voter'
+            }
+        }), 201
+
+    except Exception as e:
+        return jsonify({'error': 'Internal server error'}), 500
+
+
+@auth_bp.route('/api/login', methods=['POST'])
+def login():
+    """Authenticate specific user."""
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+
+    email = data.get('email', '').strip().lower()
+    password = data.get('password', '')
+
+    if not email or not password:
+        return jsonify({'error': 'Email and password required'}), 400
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM users WHERE email = ?', (email,))
+        user = cursor.fetchone()
+        conn.close()
+
+        # Timing attack mitigation: verify a dummy hash if user doesn't exist
+        # using arbitrary bcrypt hash.
+        dummy_hash = "$2b$12$KIXE71T6gO71Vf.8e.8wU.UuN/Nq/c.K.s.g/s.x.L/w/I.F.v.nC"
+        
+        if user:
+            is_valid = verify_password(password, user['password_hash'])
+        else:
+            try:
+                verify_password(password, dummy_hash)
+            except Exception:
+                pass
+            is_valid = False
+
+        if not is_valid:
+            log_action(action='FAILED_LOGIN', metadata={'email': email}, ip_address=request.remote_addr)
+            return jsonify({'error': 'Invalid email or password'}), 401
+
+        token = generate_token(user['id'], user['role'], user['full_name'])
+        log_action(action='SUCCESSFUL_LOGIN', user_id=user['id'], ip_address=request.remote_addr)
+
+        return jsonify({
+            'message': 'Login successful',
+            'token': token,
+            'user': {
+                'id': user['id'],
+                'full_name': user['full_name'],
+                'email': user['email'],
+                'role': user['role']
+            }
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': 'Internal server error'}), 500
+
+
+@auth_bp.route('/api/me', methods=['GET'])
+@token_required
+def get_me(current_user):
+    """Return the profile of the current authenticated user."""
+    return jsonify({'user': current_user}), 200
