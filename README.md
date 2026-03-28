@@ -34,11 +34,11 @@ SecureVote is a production-grade web application that demonstrates real-world se
 | Layer        | Technology                               |
 | ------------ | ---------------------------------------- |
 | **Backend**  | Python Flask (REST API with Blueprints)  |
-| **Database** | SQLite (6-table production schema)       |
-| **Auth**     | bcrypt + PyJWT (stateless JWT tokens)    |
-| **Frontend** | Vanilla HTML, CSS, JavaScript            |
-| **Charts**   | Chart.js 4.x                             |
-| **Design**   | Custom CSS design system with Inter font |
+| **Database**   | SQLite (6-table, WAL journal mode + optimized indexing) |
+| **Auth**       | bcrypt + PyJWT (stateless JWT tokens)                   |
+| **Frontend**   | Vanilla HTML, CSS, JavaScript                           |
+| **Charts**     | Chart.js 4.x                                            |
+| **Design**     | Custom CSS design system with Inter font                |
 
 ---
 
@@ -193,9 +193,10 @@ Unified table for voters and admins with role-based access.
 | `id`         | INTEGER PK | Auto-increment     |
 | `full_name`  | TEXT       | Required           |
 | `email`      | TEXT       | Unique             |
-| `password`   | TEXT       | bcrypt hash        |
-| `role`       | TEXT       | `voter` or `admin` |
-| `created_at` | TIMESTAMP  | Auto-set           |
+| `password_hash`| TEXT       | bcrypt hash        |
+| `role`         | TEXT       | `voter` or `admin` |
+| `has_voted`    | INTEGER    | Default `0`        |
+| `created_at`   | TIMESTAMP  | Auto-set           |
 
 ### `elections`
 
@@ -257,11 +258,13 @@ Automated anomaly detection results.
 | Column                    | Type       | Notes                                 |
 | ------------------------- | ---------- | ------------------------------------- |
 | `id`                      | INTEGER PK | Auto-increment                        |
+| `user_id`                 | INTEGER    | Context (actor)                       |
+| `election_id`             | INTEGER    | Context (election)                    |
 | `alert_type`              | TEXT       | e.g. `ip_anomaly`, `rapid_submission` |
-| `severity`                | TEXT       | `low`, `medium`, `high`, `critical`   |
-| `user_id` / `election_id` | INTEGER    | Context                               |
 | `details`                 | TEXT       | Description                           |
-| `resolved`                | BOOLEAN    | Default `false`                       |
+| `severity`                | TEXT       | `medium`, `high`                      |
+| `status`                  | TEXT       | `open` or `resolved`                  |
+| `created_at`              | TIMESTAMP  | Auto-set                              |
 
 ---
 
@@ -270,6 +273,7 @@ Automated anomaly detection results.
 | Layer                  | Implementation                                                     |
 | ---------------------- | ------------------------------------------------------------------ |
 | **Password Hashing**   | bcrypt with automatic salting                                      |
+| **Anti-Enumeration**   | Timing-attack mitigation via dummy bcrypt execution on failed auth |
 | **Authentication**     | Stateless JWT tokens (PyJWT) with configurable expiry              |
 | **Authorization**      | Role-based decorators (`@token_required`, `@admin_required`)       |
 | **Vote Integrity**     | HMAC-SHA256 hash chaining — each vote references the previous hash |
@@ -278,7 +282,7 @@ Automated anomaly detection results.
 | **Audit Trail**        | Every action logged with user, IP, timestamp, and metadata         |
 | **Input Validation**   | Server-side validation on all endpoints                            |
 | **XSS Prevention**     | HTML escaping in all frontend rendering                            |
-| **CORS**               | Configured via Flask-CORS                                          |
+| **CORS**               | Configured via strict Flask-CORS constraints                       |
 
 ### Environment Variables
 
